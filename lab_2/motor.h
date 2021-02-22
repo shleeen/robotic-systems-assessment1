@@ -1,11 +1,6 @@
 #ifndef _MOTOR_H
 #define _MOTOR_H
 
-#define DIR_FWD LOW
-#define DIR_BCK HIGH
-//#define R_DIR_FWD LOW
-//#define R_DIR_BCK HIGH
-
 // A class to neatly contain commands for the motors, to take care of +/- values, 
 //  a min/max power value, & pin setup.
 
@@ -35,11 +30,11 @@ void motor_c::setMotorPower(float power ){
 
  //if negative, move BCK
   if (power < 0){
-    digitalWrite( dir_pin, DIR_BCK );
+    digitalWrite( dir_pin, HIGH );
     new_power = 255 - power;
   }
   else{ //move FWD
-    digitalWrite( dir_pin, DIR_FWD );
+    digitalWrite( dir_pin, LOW );
     new_power = power;
   }
   

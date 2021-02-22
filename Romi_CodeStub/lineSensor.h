@@ -3,14 +3,14 @@
 
 #include "utils.h"
 
-class lineSensor_c {
+class LineSensor_c {
 
   public :
     int pin;
     int bias;
 
     // Constructor, accepts a pin number as arg and sets this as input.
-    lineSensor_c( int which_pin ) {
+    LineSensor_c( int which_pin ) {
       Serial.print( " In constructor " );
       pin = which_pin;
       pinMode(pin, INPUT);
@@ -27,15 +27,15 @@ class lineSensor_c {
 
 };
 
-int lineSensor_c::getVoltage() {
+int LineSensor_c::getVoltage() {
   return analogRead(pin);
 }
 
-int lineSensor_c::readCalibrated() {
+int LineSensor_c::readCalibrated() {
   return analogRead(pin) - bias;
 }
 
-void lineSensor_c::calibrate(){
+void LineSensor_c::calibrate(){
   Serial.print( "calibrating... " );
   float value;
   int samples = 1;
@@ -57,7 +57,7 @@ void lineSensor_c::calibrate(){
 //   play_tone(80, 1000);
 }
 
-boolean lineSensor_c::onLine(float threshold){
+boolean LineSensor_c::onLine(float threshold){
     if (analogRead(pin) > threshold){ //then it sees blacks
       return true;   
     }
