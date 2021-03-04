@@ -57,6 +57,11 @@ void lineSensor_c::calibrate(){
 //   play_tone(80, 1000);
 }
 
+void weightedCalc(){
+  
+}
+
+
 boolean lineSensor_c::onLine(float threshold){
     if (analogRead(pin) > threshold){ //then it sees blacks
       return true;   
