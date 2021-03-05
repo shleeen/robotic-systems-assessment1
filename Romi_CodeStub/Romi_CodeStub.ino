@@ -24,7 +24,7 @@
 #define L_DIR_PIN 16
 #define R_PWM_PIN  9
 #define R_DIR_PIN 15
-#define POWER_MAX 255
+#define POWER_MAX 5
 
 const int THRESHOLD = 500;
 
@@ -37,9 +37,20 @@ LineSensor_c sensor_R (LINE_RIGHT_PIN);
 Motor_c motor_L (L_PWM_PIN, L_DIR_PIN);
 Motor_c motor_R (R_PWM_PIN, R_DIR_PIN);
 
-void DriveStraight() {
-  motor_L.setMotorPower(20);
-  motor_R.setMotorPower(20);
+void MoveStraight() {
+  if( sensor_C.onLine() ) {
+      // flash LED
+      // stop moving!!
+      
+      Serial.println("on line! \n");
+  } 
+  else { 
+      Serial.println("NOT line! \n");
+      //keep going straight
+      motor_L.setMotorPower(20);
+      motor_R.setMotorPower(20);
+  }
+
 }
 
 //Weighted Line Sensing
@@ -64,16 +75,18 @@ float WeightedCalc(){
 }
 
 // BangBang controller with power scaling
-void BangBangPower(float M){
-  float power_r = M * POWER_MAX * (-1);
+void PowerScaling(float M){  
+  float power_right = M * POWER_MAX * (-1);
   float power_left = M * POWER_MAX * (1);
+
+//  motor_R.setMotorPower(power_right);
+//  motor_L.setMotorPower(power_left);
+
+//use this in bang bang?  
 }
 
 // bang bang controller for romi to follow line
-void BangBang(){
-  Serial.print("in bang bang \n");
-
-  float M = WeightedCalc();
+void BangBang(float M){
   if (M < 0){
     //move right
     motor_R.setMotorPower(10);
@@ -121,10 +134,12 @@ void setup() {
 
 
 void loop() {
-  
+  float M = WeightedCalc();
+
+  MoveStraight();
   // call bang bang
-  BangBang();
-//  WeightedCalc();
+  BangBang(M);
+
 
   delay(20);
   
