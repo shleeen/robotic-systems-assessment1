@@ -47,13 +47,14 @@ void LineSensor_c::calibrate(){
 
     float next = analogRead(pin);
     //the current reading divided by the total number of samples
-    mean = (mean * samples + next) / (samples + 1);
+    mean = mean + (( next - mean) / (samples + 1));
 
     samples+=1;
   }
 
    // add beeep
-   Serial.print( "caliberation complete. \n" );
+   Serial.print( "calibration complete. \n" );
+   delay(3000);
 //   play_tone(80, 1000);
 }
 

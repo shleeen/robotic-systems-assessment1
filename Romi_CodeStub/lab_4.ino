@@ -63,3 +63,31 @@
 //  delay(20);
 //
 //} // end of loop()
+
+
+// CODE FOR BANG BANG???
+//  if (sensor_L.onLine(THRESHOLD) && sensor_C.onLine(THRESHOLD) && sensor_R.onLine(THRESHOLD) ){
+//    Serial.print("hello \n");
+//    // move forward
+//    motor_L.setMotorPower(20);
+//    motor_R.setMotorPower(20);
+//  }
+//  else if(sensor_L.onLine(THRESHOLD) && !sensor_R.onLine(THRESHOLD) ) {
+//    //if only Left is on line, move LEFT???
+//    Serial.print("there \n");
+//    motor_R.setMotorPower(15);
+//    motor_L.setMotorPower(0);
+//  }
+//  else {
+//    motor_L.setMotorPower(0);
+//    motor_R.setMotorPower(0);
+//  }
+//  else if(){
+//    //if only CENTRE is on line
+//    //move STRAIGHT???
+//  }
+//  else if(){
+//    //if only RIGHT is on line
+//    //move RIGHT???
+//  }
+//
