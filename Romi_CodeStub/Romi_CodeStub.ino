@@ -21,6 +21,7 @@
 #define STATE_INITIAL         0
 #define STATE_DRIVE_FORWARDS  1
 #define STATE_FOUND_LINE      2
+#define STATE_FOLLOW_LINE     3
 
 #define LINE_LEFT_PIN A2 //Pin for the left line sensor
 #define LINE_CENTRE_PIN A3 //Pin for the centre line sensor
@@ -31,9 +32,20 @@
 #define R_DIR_PIN 15
 #define POWER_MAX 5
 
-const int THRESHOLD = 500;
-unsigned long timestamp;
 int state = 0;
+
+const int THRESHOLD = 500;
+
+unsigned      spd_update_ts; // to seq out speed update
+long last_e0_count; //long since it can be negative
+long last_e1_count;
+
+unsigned long pwr_ramp_ts;
+float dir;
+float pwr;
+float pwr_inc;
+
+float spd_avg;
 
 LineSensor_c sensor_L (LINE_LEFT_PIN); //a line sensor object for the left sensor
 LineSensor_c sensor_C (LINE_CENTRE_PIN);
@@ -42,80 +54,7 @@ LineSensor_c sensor_R (LINE_RIGHT_PIN);
 Motor_c motor_L (L_PWM_PIN, L_DIR_PIN);
 Motor_c motor_R (R_PWM_PIN, R_DIR_PIN);
 
-
-void MoveStraight() {
-  if( sensor_L.onLine(THRESHOLD) || sensor_C.onLine(THRESHOLD) || sensor_R.onLine(THRESHOLD) ) {
-      // stop moving!!
-//      motor_L.setMotorPower(0);
-//      motor_R.setMotorPower(0);
-      Serial.println("on line! \n");
-      // flash LED
-      FlashLED(1000);
-      // Trigger State Transition
-      state = STATE_FOUND_LINE;
-  } 
-  else { 
-      Serial.println("NOT line! \n");
-      //keep going straight
-      motor_L.setMotorPower(20);
-      motor_R.setMotorPower(20);
-  }
-}
-
-//Weighted Line Sensing
-float WeightedCalc(){
-  float I_l = sensor_L.getVoltage();
-  float I_c = sensor_C.getVoltage();
-  float I_r = sensor_R.getVoltage();
-
-  float I_total = I_l + I_c + I_r;
-  float prob[3];
-  prob[0] = I_l/I_total;
-  prob[1] = I_c/I_total;
-  prob[2] = I_r/I_total;
-
-  // check that prob sum to 1?
-  float M = prob[0] - prob[1];
-  Serial.print(M);
-  Serial.print("\n");
-
-  return M;
-}
-
-// BangBang controller with power scaling
-void PowerScaling(float M){  
-  float power_right = M * POWER_MAX * (-1);
-  float power_left = M * POWER_MAX * (1);
-
-//  motor_R.setMotorPower(power_right);
-//  motor_L.setMotorPower(power_left);
-
-//use this in bang bang?  
-}
-
-// bang bang controller for romi to follow line
-void BangBang(float M){
-  if (M < 0){
-    //move right
-//    motor_R.setMotorPower(10);
-    motor_L.setMotorPower(15);
-  }
-  else if (M > 0){
-    //move left
-    motor_R.setMotorPower(15);
-//    motor_L.setMotorPower(10);
-  }
-  else if (M == 0){
-    //move straight
-    motor_R.setMotorPower(15);
-    motor_L.setMotorPower(15);
-  }
-  else{
-    //move straight
-    motor_R.setMotorPower(15);
-    motor_L.setMotorPower(15);
-  }
-}
+kinematics_c kine;
 
 
 // Setup, only runs once when the power is turned on.
@@ -123,7 +62,9 @@ void BangBang(float M){
 void setup() {
   // These two function set up the pin change interrupts for the encoders.
   setupEncoder0();
+  last_e0_count = count_e0; //capture initial state of e0
   setupEncoder1();
+  last_e1_count = count_e1;
   
   // Start up the serial port.
   Serial.begin(9600);
@@ -139,53 +80,63 @@ void setup() {
 //  sensor_L.calibrate();
 //  sensor_C.calibrate();
 //  sensor_R.calibrate();
-
-  // beep?
-
+  
   // Set initial state, before robot begins to operate.
   state = STATE_INITIAL;
 
   // Record an initial timestamp.
-  timestamp = millis();
-
-
+  spd_update_ts = millis();
+  spd_avg = 0;
+  
+  pwr_ramp_ts = millis();
+  dir = 1;
+  pwr = 0;
+  pwr_inc = 10;
+  
   // Print a debug, so we can see a reset on monitor.
   Serial.println("***RESET***");
-
 }
 
 
 void loop() {
   float M = WeightedCalc();
+  //  Serial.print(M);
+  //  Serial.print("\n");
+  kine.update();
 
 //  MoveStraight();
 //  // call bang bang
 //  BangBang(M);
 
 // Based on the value of STATE variable, run code for the appropriate robot behaviour.
-  if( state == STATE_INITIAL ) {
-    Serial.println( "in initial state" );
-     InitialisingBeeps();
-
-  } else if( state == STATE_DRIVE_FORWARDS ) {
-    Serial.println( "in move forwards state" );
-     MoveStraight();
-
-  } else if( state == STATE_FOUND_LINE ) {
-    Serial.print( " in found line state " );
-     foundLineBeeps();
+//  if( state == STATE_INITIAL ) {
+//    Serial.println( "in initial state" );
+//     InitialisingBeeps();
+//
+//  } else if( state == STATE_DRIVE_FORWARDS ) {
+//    Serial.println( "in move forwards state" );
+//     MoveStraight();
+//
+//  } else if( state == STATE_FOUND_LINE ) {
+//    Serial.print( " in found line state " );
+//     foundLineBeeps();
+////      BangBang(M);
+//
+//  } else if ( state == STATE_FOUND_LINE ) {
 //      BangBang(M);
+//  } else {
+//      Serial.print("System Error, Unknown state: ");
+//      Serial.println( state );
+//  }
 
-  } else {
-      Serial.print("System Error, Unknown state: ");
-      Serial.println( state );
-  }
+  // motor.setPower()
+
 //  Serial.print( count_e0 );
 //  Serial.print( ", ");
 //  Serial.println( count_e1 );
 
 //   Small delay so plotter graph keeps history
-//  delay(2);
+//  delay(3);
   delay(20);
 }
 
@@ -233,20 +184,87 @@ void InitialisingBeeps() {
 //  }
 }
 
-//
+// Write code that will deactivate all motors, and beep once for one second, then do nothing.
 void foundLineBeep() {
   motor_L.setMotorPower(0);
   motor_R.setMotorPower(0);
+  // two beeps instead of one for 1 sec
   PlayBeep(3, 500);
   PlayBeep(3, 500);
 }
 
+// Function to drive forward, and change state once line is found 
+void MoveStraight() {
+  if( sensor_L.onLine(THRESHOLD) || sensor_C.onLine(THRESHOLD) || sensor_R.onLine(THRESHOLD) ) {
+      // stop moving!!
+//      motor_L.setMotorPower(0);
+//      motor_R.setMotorPower(0);
+      Serial.println("on line! \n");
+      // flash LED
+      FlashLED(1000);
+      // Trigger State Transition
+      state = STATE_FOUND_LINE;
+  } 
+  else { 
+      Serial.println("NOT line! \n");
+      //keep going straight
+      motor_L.setMotorPower(20);
+      motor_R.setMotorPower(20);
+  }
+}
+
+//Weighted Line Sensing
+float WeightedCalc(){
+  float I_l = sensor_L.getVoltage();
+  float I_c = sensor_C.getVoltage();
+  float I_r = sensor_R.getVoltage();
+
+  float I_total = I_l + I_c + I_r;
+  float prob[3];
+  prob[0] = I_l/I_total;
+  prob[1] = I_c/I_total;
+  prob[2] = I_r/I_total;
+
+  // check that prob sum to 1?
+  float M = prob[0] - prob[1];
+
+  return M;
+}
+
+
+// bang bang controller for romi to follow line
+void BangBang(float M){
+  if (M < 0){
+    //move right
+//    motor_R.setMotorPower(10);
+    motor_L.setMotorPower(15);
+  }
+  else if (M > 0){
+    //move left
+    motor_R.setMotorPower(15);
+//    motor_L.setMotorPower(10);
+  }
+  else if (M == 0){
+    //move straight
+    motor_R.setMotorPower(15);
+    motor_L.setMotorPower(15);
+  }
+  else {
+    Serial.println(" IN THE BANG BANG ELSE ");
+    state = STATE_DRIVE_FORWARDS; 
+//    //move straight
+//    motor_R.setMotorPower(15);
+//    motor_L.setMotorPower(15);
+  }
+}
+
+
 // Function to play a beep once at given volume, for delay_ms long
 void PlayBeep(int volume, int delay_ms){
-    analogWrite(6, volume);
-    delay(delay_ms);
-    analogWrite(6, 0);
-    delay(delay_ms);
+  analogWrite(6, volume);
+  delay(delay_ms);
+  analogWrite(6, 0);
+  delay(delay_ms);
 }
 
 // Function to flash the built in LED once for delay_ms long
@@ -255,4 +273,15 @@ void FlashLED(int delay_ms){
   delay(delay_ms);                       // wait for a second
   digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
   delay(delay_ms);
+}
+
+// BangBang controller with power scaling
+void PowerScaling(float M){  
+  float power_right = M * POWER_MAX * (-1);
+  float power_left = M * POWER_MAX * (1);
+
+//  motor_R.setMotorPower(power_right);
+//  motor_L.setMotorPower(power_left);
+
+//use this in bang bang?  
 }
