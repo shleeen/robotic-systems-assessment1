@@ -5,6 +5,7 @@
 #define E1_B_PIN  23
 #define E0_A_PIN  26
 //E0_B_Pin is defined seperately later
+//    it's a non-standard pin.
 
 // Volatile Global variables used by Encoder ISR.
 volatile long count_e1; // used by encoder to count the rotation
@@ -45,29 +46,35 @@ ISR( INT6_vect ) {
   state = state | ( oldE1_A  << 1 );
   state = state | ( oldE1_B  << 0 );
 
-  
-
+ 
   // This is an inefficient way of determining
   // the direction.  However it illustrates well
   // against the lecture slides.
   if( state == 1 ) {           // row 1 from table
     count_e1 = count_e1 + 1;
-
+  
   } else if( state == 2 ) {    // row 2 from table
-    // ?
-
+    count_e1 = count_e1 - 1;
+    
   } else if( state == 4 ) {    // row 4 from table
-    // ?    
-
+    count_e1 = count_e1 - 1;
+  
   } else if( state == 7 ) {
-    // ?
-
+    count_e1 = count_e1 + 1;
+  
   } else if( state == 8 ) {
-    // ?
-
-  } // else if(  { // ...etc
+    count_e1 = count_e1 + 1;
   
+  } else if( state == 11 ) {
+    count_e1 = count_e1 - 1;
   
+  } else if( state == 13 ) {
+    count_e1 = count_e1 - 1;
+  
+  } else if( state == 14 ) {
+    count_e1 = count_e1 + 1;
+  }
+  //else{} ??
 
   // Save current state as old state for next call.
   oldE1_A = newE1_A;
@@ -101,7 +108,6 @@ ISR( PCINT0_vect ) {
   // true value.
   newE0_A ^= newE0_B;
 
-
   
   // Create a bitwise representation of our states
   // We do this by shifting the boolean value up by
@@ -117,8 +123,6 @@ ISR( PCINT0_vect ) {
   state = state | ( oldE0_B  << 0 );
 
 
-
-
   // This is an inefficient way of determining
   // the direction.  However it illustrates well
   // against the lecture slides.  
@@ -126,18 +130,28 @@ ISR( PCINT0_vect ) {
     count_e0 = count_e0 + 1;
 
   } else if( state == 2 ) {    // row 2 from table
-    // ?
+    count_e0 = count_e0 - 1;
 
   } else if( state == 4 ) {    // row 4 from table
-    // ?    
-
+    count_e0 = count_e0 - 1;
+    
   } else if( state == 7 ) {
-    // ?
+    count_e0 = count_e0 + 1;
 
   } else if( state == 8 ) {
-    // ?
+    count_e0 = count_e0 + 1;
 
-  } // else if(  { // ...etc
+  } else if( state == 11 ){
+    count_e0 = count_e0 - 1;
+    
+  } else if ( state == 13 ){
+    count_e0 = count_e0 - 1;
+    
+  } else if ( state == 14 ){
+    count_e0 = count_e0 + 1;
+    
+  } 
+//  else {} ???
      
   // Save current state as old state for next call.
   oldE0_A = newE0_A;

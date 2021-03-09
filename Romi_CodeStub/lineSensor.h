@@ -1,8 +1,6 @@
 #ifndef _LINESENSOR_H
 #define _LINESENSOR_H
 
-//#include "utils.h"
-
 class LineSensor_c {
 
   public :
@@ -14,27 +12,31 @@ class LineSensor_c {
       Serial.print( " In constructor " );
       pin = which_pin;
       pinMode(pin, INPUT);
+      bias = 0;
     };
 
-
-    // calibration routine here to remove bias offset
+    // Member functions for class
     void calibrate();
-    // Write a routine here to check if your sensor is on a line (true or false).
     boolean onLine( float threshold );
-    // gets the value i.e voltage of analogRead() for pin represented in class
     int getVoltage();
     int readCalibrated();
 
 };
 
+
+// Returns the voltage of analogRead() for pin represented in class
 int LineSensor_c::getVoltage() {
   return analogRead(pin);
 }
 
+
+// Returns the calibrated value of voltage
 int LineSensor_c::readCalibrated() {
   return analogRead(pin) - bias;
 }
 
+
+// Calibration routine to remove bias offset.
 void LineSensor_c::calibrate(){
   Serial.print( "calibrating... " );
   float value;
@@ -52,12 +54,13 @@ void LineSensor_c::calibrate(){
     samples+=1;
   }
 
-   // add beeep
+   bias = mean;
    Serial.print( "calibration complete. \n" );
-   delay(3000);
-//   play_tone(80, 1000);
+   delay(2000);
 }
 
+
+// Checks if sensor is on a line (returns true or false).
 boolean LineSensor_c::onLine(float threshold){
     if (analogRead(pin) > threshold){ //then it sees blacks
       return true;   
