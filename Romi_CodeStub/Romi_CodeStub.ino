@@ -102,7 +102,7 @@ void loop() {
   float M = WeightedCalc();
   //  Serial.print(M);
   //  Serial.print("\n");
-  kine.update();
+//  kine.update();
 
 //  MoveStraight();
 //  // call bang bang
@@ -128,9 +128,7 @@ void loop() {
 //      Serial.print("System Error, Unknown state: ");
 //      Serial.println( state );
 //  }
-
-  // motor.setPower()
-
+   
 //  Serial.print( count_e0 );
 //  Serial.print( ", ");
 //  Serial.println( count_e1 );
