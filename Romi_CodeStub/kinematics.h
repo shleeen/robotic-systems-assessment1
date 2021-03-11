@@ -3,14 +3,12 @@
 
 #define PI 3.14
 
-//You may want to use some/all of these variables
-//const float DIAMETER = 69.0f;
-const float RADIUS = 34.75; //35.0;
+const float RADIUS = 35.00;
 const float L = 70.0; // distance from centre of romi to a wheel
 
 // for 1 revolution of wheel -> 1440 counts
 const float MM_PER_COUNT = ((2*PI) / 1440.0) * RADIUS; // dist travelled (in mm) for 1 count
-// this should be 0.15mm...
+// this^ should be 0.15mm...
 
 
 class kinematics_c {
@@ -34,13 +32,13 @@ class kinematics_c {
     float prev_e1;
 };
 
-
+// Constructor; initialize all variables to 0
 kinematics_c::kinematics_c() {
-  x = 0;
-  y = 0;
-  theta = 0;
-  prev_e0 = 0;
-  prev_e1 = 0;  
+  x = 0.0;
+  y = 0.0;
+  theta = 0.0;
+  prev_e0 = 0.0;
+  prev_e1 = 0.0;  
 } 
 
 
@@ -52,7 +50,7 @@ void kinematics_c::update() {
   prev_e0 = count_e0;
   prev_e1 = count_e1;
   
-  // Convert this change to an appropriate unit (mm or cm)
+  // Convert this change to an appropriate unit (mm)
   float dist_L = change_in_e0 * MM_PER_COUNT; //mm
   float dist_R = change_in_e1 * MM_PER_COUNT; //mm
 
@@ -75,10 +73,6 @@ float kinematics_c::calcAngle(){
   return angle;
 }
 
-
-//void driveStraightUntilDistance( demand_distance){
-//  
-//}
 
 float kinematics_c::getX(){
   return x;

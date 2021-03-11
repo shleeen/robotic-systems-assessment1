@@ -8,7 +8,6 @@
 
 // A class to neatly contain commands for the motors, to take care of +/- values,
 //  a min/max power value, & pin setup.
-
 class Motor_c {
   public:
     int pwm_pin;
@@ -27,9 +26,6 @@ Motor_c::Motor_c(int pwm, int dir ) {
   pinMode( pwm_pin, OUTPUT );
   pinMode( dir_pin, OUTPUT );
 }
-
-//check between 255 and -255 !!!!!!!!!!!!!!!!!1
-
 
 /*
    This function writes the value power_in

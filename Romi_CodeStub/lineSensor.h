@@ -56,7 +56,7 @@ void LineSensor_c::calibrate(){
 
    bias = mean;
    Serial.print( "calibration complete. \n" );
-   delay(2000);
+   delay(500);
 }
 
 
