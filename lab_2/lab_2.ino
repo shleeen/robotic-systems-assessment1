@@ -85,6 +85,9 @@ void loop() {
   Serial.print("l_power: "); Serial.println(l_power);
   Serial.print("r_power: "); Serial.println(r_power);
 
+  left.setMotorPower(20);
+  right.setMotorPower(-20);
+
 //  if (l_power < 0){
 //    //if negative
 //    Serial.print("here ");

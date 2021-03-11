@@ -1,12 +1,12 @@
 #ifndef _KINEMATICS_H
 #define _KINEMATICS_H
 
-#define PI 3.1415926535897932384626433832795
+#define PI 3.14
 
 //You may want to use some/all of these variables
 //const float DIAMETER = 69.0f;
-const float RADIUS = 35.0;
-//const float L ; //
+const float RADIUS = 34.75; //35.0;
+const float L = 70.0; // distance from centre of romi to a wheel
 
 // for 1 revolution of wheel -> 1440 counts
 const float MM_PER_COUNT = ((2*PI) / 1440.0) * RADIUS; // dist travelled (in mm) for 1 count
@@ -22,12 +22,13 @@ class kinematics_c {
     float getX();
     float getY();
     float getTheta();
+    float calcAngle();
 
    private:
    
     float x;
     float y;
-    float theta;
+    float theta; //in radians
 
     float prev_e0;
     float prev_e1;
@@ -52,22 +53,32 @@ void kinematics_c::update() {
   prev_e1 = count_e1;
   
   // Convert this change to an appropriate unit (mm or cm)
-//  ???   
-
-  float angular_v_L = change_in_e0 * MM_PER_COUNT;
-  float angular_v_R = change_in_e1 * MM_PER_COUNT;
+  float dist_L = change_in_e0 * MM_PER_COUNT; //mm
+  float dist_R = change_in_e1 * MM_PER_COUNT; //mm
 
   // mean change in encoder count
-  float d = (angular_v_L + angular_v_R)/2.0;
+  float d = (dist_L + dist_R)/2.0;
   
-  x += d * cos(theta);
-  y += d * sin(theta);
-//  theta +=
-  Serial.print( x );
-  Serial.print( "," );
-  Serial.println( y );
-  
+  x = x + d * cos(theta);
+  y = y + d * sin(theta);
+  theta = theta + ((dist_L - dist_R)/(2.0*L)  );
+
 }
+
+
+// Returns the angle in degrees
+float kinematics_c::calcAngle(){
+  float angle =  (theta / (2 * PI) * 360 ); 
+//  if (angle < 0){
+//    return 180-
+//  }
+  return angle;
+}
+
+
+//void driveStraightUntilDistance( demand_distance){
+//  
+//}
 
 float kinematics_c::getX(){
   return x;
