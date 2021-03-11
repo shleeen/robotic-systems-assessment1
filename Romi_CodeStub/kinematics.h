@@ -13,34 +13,31 @@ const float MM_PER_COUNT = ((2*PI) / 1440.0) * RADIUS; // dist travelled (in mm)
 
 class kinematics_c {
   public:
-
-    // Function Prototypes
-    kinematics_c();   // constructor 
-    void update();    // update kinematics
-    float getX();
-    float getY();
-    float getTheta();
-    float calcAngle();
+      // Function Prototypes
+      kinematics_c();   // constructor 
+      void update();
+      float getX();
+      float getY();
+      float getTheta();
+      float calcAngle();
 
    private:
-   
-    float x;
-    float y;
-    float theta; //in radians
-
-    float prev_e0;
-    float prev_e1;
+      float x;
+      float y;
+      float theta; //in radians
+  
+      float prev_e0;
+      float prev_e1;
 };
 
-// Constructor; initialize all variables to 0
+// Constructor; initialize all variables to 0.0
 kinematics_c::kinematics_c() {
   x = 0.0;
   y = 0.0;
   theta = 0.0;
   prev_e0 = 0.0;
   prev_e1 = 0.0;  
-} 
-
+}
 
 // Routine to execute the update to kinematics 
 void kinematics_c::update() {
@@ -59,20 +56,15 @@ void kinematics_c::update() {
   
   x = x + d * cos(theta);
   y = y + d * sin(theta);
-  theta = theta + ((dist_L - dist_R)/(2.0*L)  );
+  theta = theta + ((dist_L - dist_R)/(2.0*L));
 
 }
-
 
 // Returns the angle in degrees
 float kinematics_c::calcAngle(){
-  float angle =  (theta / (2 * PI) * 360 ); 
-//  if (angle < 0){
-//    return 180-
-//  }
+  float angle =  (theta / (2 * PI) * 360 );
   return angle;
 }
-
 
 float kinematics_c::getX(){
   return x;

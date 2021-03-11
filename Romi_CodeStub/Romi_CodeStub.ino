@@ -23,7 +23,6 @@
 #define STATE_FOUND_LINE      2
 #define STATE_FOLLOW_LINE     3
 #define STATE_LINE_END        4
-#define STATE_STOP            5
 
 // define pins
 #define LINE_LEFT_PIN A2 //Pin for the left line sensor
@@ -78,11 +77,6 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(6, OUTPUT); //Buzzer pin
 
-  // Calibrate the three line sensors.
-//  sensor_L.calibrate();
-//  sensor_C.calibrate();
-//  sensor_R.calibrate();
-
   // Set initial state, before robot begins to operate.
   state = STATE_INITIAL;
 
@@ -97,11 +91,10 @@ void setup() {
 void loop() {
   float M = WeightedCalc();
 //  Serial.println(M);
- 
+
+  // Call kinematics update function
   kine.update();
 
-//  MoveStraight();
-//  BangBang(M);
 
 // Based on the value of STATE variable, run code for the appropriate robot behaviour.
     if( state == STATE_INITIAL ) {
@@ -114,126 +107,61 @@ void loop() {
     }
     else if ( state == STATE_FOUND_LINE ) {
         Serial.println( " in found line state " );
-        function();
+        TurnCheckForLine();
     }
-    
-    //        float theta = kine.getTheta();
-    //         
-    //        if(theta <= 0.7){
-    //          motor_R.setMotorPower(-20);
-    //          motor_L.setMotorPower(20);
-    //        }
-    //        else{
-    //          motor_R.setMotorPower(0);
-    //          motor_L.setMotorPower(0); 
-    //        }
-    //
-    //        if( sensor_R.onLine(THRESHOLD) || sensor_C.onLine(THRESHOLD) ) {
-    //            Serial.println("I FOUND A LINE FOR SURE");
-    ////            motor_R.setMotorPower(0);
-    ////            motor_L.setMotorPower(0);
-    //            // state = STATE_FOLLOW_LINE;
-    //        }
-        
-    //        TurnToTarget(20);
-    //        state = STATE_FOLLOW_LINE;
-      //      if( sensor_L.onLine(THRESHOLD) || sensor_C.onLine(THRESHOLD) || sensor_R.onLine(THRESHOLD) ){
-      //        state = STATE_FOLLOW_LINE;
-      //      }
-      //      else {
-      //        TurnToTarget(-80);
-      //        state = STATE_FOLLOW_LINE;
-      //      }
-    //    }
     else if ( state == STATE_FOLLOW_LINE ) {
         Serial.println( " in follow line state" );
         BangBang(M);
     }
     else if ( state == STATE_LINE_END ) {
         Serial.println( " in line end state " );
-        function();
-//        //clockwise
-//        if (flag == 0) {
-//          Serial.println("in flag 0");
-//          TurnToTarget(90);
-//
-//          counter += 1;
-//
-//          if ( sensor_C.onLine(THRESHOLD) ){
-//            Serial.println(" ON LINE AGAIN ");
-//            state = STATE_FOLLOW_LINE;
-//            flag = 0;
-//          }
-//          else{
-//            state = STATE_LINE_END;
-//
-//            // try left turn only after 3 attempts at turning right
-//            if (counter > 500){            
-//              flag = 1;
-//            }
-//          }
-//        }
-//        // anticlockwise
-//        else if (flag == 1){
-//          Serial.println("in flag 1");
-//          TurnToTarget(-90);
-//          if ( sensor_C.onLine(THRESHOLD) ){
-//            Serial.println(" ON LINE AGAIN ");
-//            state = STATE_FOLLOW_LINE;
-//          }
-//          else{
-//            state = STATE_LINE_END;
-//          }
-//        }
+        TurnCheckForLine();
     }
     else {
         Serial.print("System Error, Unknown state: ");
         Serial.println( state );
     }
-
   
   delay(20);
 }
 
 
-void function(){
-        //clockwise
-        if (flag == 0) {
-          Serial.println("in flag 0");
-          TurnToTarget(90);
+// Function to check clockwise and anti-clockwise for line
+void TurnCheckForLine(){
+  // when flag is 0, check clockwise
+  if (flag == 0) {
+    TurnToTarget(90);
 
-          counter += 1;
+    // increment global counter
+    counter += 1;
 
-          if ( sensor_C.onLine(THRESHOLD) ){
-            Serial.println(" ON LINE AGAIN ");
-            state = STATE_FOLLOW_LINE;
-            flag = 0;
-          }
-          else{
-            state = STATE_LINE_END;
+    if ( sensor_C.onLine(THRESHOLD) ){
+      state = STATE_FOLLOW_LINE;
+      flag = 0;
+    }
+    else{
+      state = STATE_LINE_END;
 
-            // try left turn only after 3 attempts at turning right
-            if (counter > 500){            
-              flag = 1;
-            }
-          }
-        }
-        // anticlockwise
-        else if (flag == 1){
-          Serial.println("in flag 1");
-          TurnToTarget(-90);
-          if ( sensor_C.onLine(THRESHOLD) ){
-            Serial.println(" ON LINE AGAIN ");
-            state = STATE_FOLLOW_LINE;
-          }
-          else{
-            state = STATE_LINE_END;
-          }
-        }
+      // try left turn only after 500 counts/attempts at turning right
+      if (counter > 500){ 
+        flag = 1;
+      }
+    }
+  }
+  // when flag is 1, check anticlockise
+  else if (flag == 1){
+    TurnToTarget(-90);
+    if ( sensor_C.onLine(THRESHOLD) ){
+      state = STATE_FOLLOW_LINE;
+    }
+    else{
+      state = STATE_LINE_END;
+    }
+  }
 }
 
 
-// Function where Romi beeps 5 times, across a total of 5 seconds.
+// Function where Romi beeps 5 times while calibrating.
 void InitialisingBeeps() {
   PlayBeep(3, 500);
 
@@ -263,12 +191,6 @@ void MoveStraight() {
   if( sensor_L.onLine(THRESHOLD) || sensor_C.onLine(THRESHOLD) || sensor_R.onLine(THRESHOLD) ) {
     Serial.println("FOUND line! \n");
     foundLineBeep();
-//       stop moving!!
-//      motor_L.setMotorPower(0);
-//      motor_R.setMotorPower(0);
-//      //rotate to line
-//      motor_L.setMotorPower(20);
-//      motor_R.setMotorPower(-20);
     
     // Trigger State Transition
 //    state = STATE_FOUND_LINE;
@@ -305,22 +227,7 @@ float WeightedCalc(){
 
 // Function implementing a bang bang controller for romi to follow lines
 void BangBang(float M){
-
-  Serial.print(sensor_L.readCalibrated());
-  Serial.print(", ");
-  Serial.print(sensor_C.readCalibrated());
-  Serial.print(", ");
-  Serial.println(sensor_R.readCalibrated());
-//  Serial.println(", ");
-
-
   // if any sensor is on the line, then do bangbang
-//  if (!sensor_L.onLine(300) || !sensor_C.onLine(300) || !sensor_R.onLine(300)){
-//     Serial.println("stuck here??");
-//    TurnToTarget(80);
-//  }
-  // line has ended, go to next state
-  
   if (sensor_L.onLine(THRESHOLD) || sensor_C.onLine(THRESHOLD) || sensor_R.onLine(THRESHOLD)) {
     Serial.println("the M thing");
     if (M < 0.0){ //move right
@@ -336,80 +243,16 @@ void BangBang(float M){
       motor_L.setMotorPower(18);
     }
     else {
-////       turn check
-//      TurnToTarget(40);
-       Serial.println(" IN THE BANG BANG ELSE ");
-////       state = STATE_DRIVE_FORWARDS; 
-////          //move straight
-////          motor_R.setMotorPower(15);
-////          motor_L.setMotorPower(15);
+      Serial.println(" IN THE BANG BANG ELSE ");
     }
   }
   else{
+    // if out of the line, stop moving
     motor_R.setMotorPower(0);
     motor_L.setMotorPower(0);
+    // change state
     state = STATE_LINE_END;
   }
-
-//-----------------------    
-//    Serial.println(" END OF THE LINE maybe?? ");
-    
-//     turn check
-//    TurnToTarget(20);
-//    float theta = kine.getTheta();
-//    if(theta!= theta + 1.57){
-//      motor_R.setMotorPower(-20);
-//      motor_L.setMotorPower(20);  
-//    }
-
-//    if(theta != theta+1 ){
-//      motor_R.setMotorPower(-20);
-//      motor_L.setMotorPower(20);
-//      cur_angle = kine.getTheta(); //get current angle again
-//   }
-
-//    if (!sensor_L.onLine(THRESHOLD) || !sensor_C.onLine(THRESHOLD) || !sensor_R.onLine(THRESHOLD)){
-//      Serial.println("im here");
-//      // change state
-//      state = STATE_LINE_END;
-//    }
-      
-//    // stop moving
-//    motor_R.setMotorPower(0);
-//    motor_L.setMotorPower(0);
-    
-    // beep 3 times
-//    PlayBeep(3, 100); PlayBeep(3, 100); PlayBeep(3, 100);
-
-}
-
-
-// Function to check clockwise and anticlockwise
-boolean TurnCheck(){
-  Serial.println(" IN DETECT CORNER ");
-  // beep twice
-  PlayBeep(3, 200); PlayBeep(3, 200);
-
-  Serial.println("CLOCKWISE  ");
-  TurnToTarget(80);
-  
-  //check clockwise
-  if( sensor_L.onLine(THRESHOLD) || sensor_C.onLine(THRESHOLD) || sensor_R.onLine(THRESHOLD) ){
-//    state = STATE_FOLLOW_LINE;
-    return true;
-  }
-  //check anti-clockwise
-//  else {
-    Serial.println(" ANTI CLOCKWISE  ");
-    TurnToTarget(-160);
-    
-    if( sensor_L.onLine(THRESHOLD) || sensor_C.onLine(THRESHOLD) || sensor_R.onLine(THRESHOLD ) ){
-//      state = STATE_FOLLOW_LINE;
-      return true;
-    }
-// }
-
-  return false;
 }
 
 
@@ -461,7 +304,7 @@ void PlayBeep(int volume, int delay_ms){
 // Function to flash the built in LED once, for delay_ms long
 void FlashLED(int delay_ms){
   digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(delay_ms);                       // wait for a second
+  delay(delay_ms); // delay by given time
   digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
   delay(delay_ms);
 }

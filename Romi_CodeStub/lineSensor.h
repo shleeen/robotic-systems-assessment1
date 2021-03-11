@@ -29,12 +29,10 @@ int LineSensor_c::getVoltage() {
   return analogRead(pin);
 }
 
-
 // Returns the calibrated value of voltage
 int LineSensor_c::readCalibrated() {
   return analogRead(pin) - bias;
 }
-
 
 // Calibration routine to remove bias offset.
 void LineSensor_c::calibrate(){
@@ -58,7 +56,6 @@ void LineSensor_c::calibrate(){
    Serial.print( "calibration complete. \n" );
    delay(500);
 }
-
 
 // Checks if sensor is on a line (returns true or false).
 boolean LineSensor_c::onLine(float threshold){
